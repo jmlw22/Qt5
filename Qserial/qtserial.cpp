@@ -1,4 +1,4 @@
-#include "qtserial.h"
+#include "main.h"
 #include "ui_qtserial.h"
 #include <QDebug>
 #include <QtSerialPort>

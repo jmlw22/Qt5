@@ -1,0 +1,8 @@
+#include "main.h"
+
+#include <QMessageBox>
+#include <QTimer>
+#include <QHostAddress>
+//#include <wiringPi.h>//树莓派管脚库
+
+
