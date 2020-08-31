@@ -206,6 +206,10 @@ void QtSerial::on_BtWeight_clicked()
             Sleep(100);
             //读取串口数据
             QByteArray recvData = mSerialPort.readAll();
+
+            QString sysTime;//定义系统时间变量
+
+            sysTime = QDateTime::currentDateTime().toString("yyyy_MM_dd_hh_mm_ss\n");
             //进行数据处理，判断是否为空
             if(recvData.isNull())
             {
@@ -224,14 +228,24 @@ void QtSerial::on_BtWeight_clicked()
                 //判断是否超过10千克
                 if(str.length() == 4)
                 {
-                    str = str.insert(1, '.');
-                    ui->textData->appendPlainText(str);
-                    qDebug() << recvData;
+                    if(str  == "FULL")//判断是否超过30Kg
+                    {
+                        ui->textData->appendPlainText("too height");
+                    }
+                    else
+                    {
+                        str = str.insert(1, '.');//在第一位数字后面插入小数点
+                        ui->textData->appendPlainText(str + " Kg");
+                        ui->textData->appendPlainText(sysTime);
+                        qDebug() << recvData;
+                    }
+
                 }
                 else
                 {
-                    str = str.insert(2, '.');
-                    ui->textData->appendPlainText(str);
+                    str = str.insert(2, '.');//在第二位数字后面插入小数点
+                    ui->textData->appendPlainText(str + " Kg");
+                    ui->textData->appendPlainText(sysTime);
                     qDebug() << recvData;
                 }
 
