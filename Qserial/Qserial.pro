@@ -1,4 +1,5 @@
 QT       += core gui    serialport
+QT       += network
 
 #LIBS += -lwiringPi
 
@@ -20,10 +21,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     main.cpp \
-    qtserial.cpp
+    qtserial.cpp \
+    rfid.cpp
 
 HEADERS += \
-    qtserial.h
+    main.h
 
 FORMS += \
     qtserial.ui
