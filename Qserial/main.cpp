@@ -1,4 +1,4 @@
-#include "qtserial.h"
+#include "main.h"
 
 #include <QApplication>
 
@@ -9,3 +9,5 @@ int main(int argc, char *argv[])
     w.show();
     return a.exec();
 }
+
+

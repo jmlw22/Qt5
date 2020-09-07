@@ -1,8 +1,9 @@
-#include "qtserial.h"
+#include "main.h"
 #include "ui_qtserial.h"
 #include <QDebug>
 #include <QtSerialPort>
 #include <QList>
+
 
 QtSerial::QtSerial(QWidget *parent)
     : QMainWindow(parent)
@@ -14,10 +15,12 @@ QtSerial::QtSerial(QWidget *parent)
 
     //刷新定义的按钮状态
     mIsOpen = false;
+    mIsOpenDtu = false;
     ui->BtWeight->setEnabled(mIsOpen);
     ui->BtSend->setEnabled(mIsOpen);
     ui->BtSetZeroRecv->setEnabled(mIsOpen);
     ui->BtSetZeroSend->setEnabled(mIsOpen);
+
 
     //识别当前系统有效串口号
     QList<QSerialPortInfo> serialPortInfo = QSerialPortInfo::availablePorts();//查看系统有哪些可用的UART
@@ -36,20 +39,24 @@ QtSerial::QtSerial(QWidget *parent)
             //qDebug() << serialPortInfo.size();//打印串口数量
             qDebug() << serialPortInfo.at(i).portName();//打印串口名字
             qDebug() << serialPortInfo.at(i).description();//打印串口描述
+
             ui->cBoxName->addItem(serialPortInfo.at(i).portName());//把识别的串口加到cBoxName中
+            ui->cBoxDtu->addItem(serialPortInfo.at(i).portName());//把识别的串口加到cBoxDtu中
+//            if(mSerialDtu.open(QIODevice::ReadWrite))
+//            {
+//                ui->cBoxDtu->addItem(serialPortInfo.at(i).portName());//把识别的串口加到cBoxDtu中
+//                mSerialDtu.close();
+//            }
         }
     }
 
 
     //窗口大小
-//    this->resize(800,450);
+    this->resize(800,450);
+    qDebug() << "==============================";
+    initDtuPort();
 
-
-    //连接串口信号和显示数据的槽函数
-    connect(&mSerialPort, SIGNAL(readyRead()), this, SLOT(on_BtWeight_clicked()));
-//    connect(&mSerialPort,  &QSerialPort::readyRead, this, &QtSerial::on_SerialPort_readyRead);
-
-
+    ConnectShow();
 }
 
 
@@ -57,6 +64,16 @@ QtSerial::QtSerial(QWidget *parent)
 QtSerial::~QtSerial()
 {
     delete ui;
+}
+
+void QtSerial::ConnectShow()
+{
+    //连接串口信号和显示数据的槽函数
+    connect(&mSerialPort, SIGNAL(readyRead()), this, SLOT(on_BtWeight_clicked()));
+//    connect(&mSerialPort,  &QSerialPort::readyRead, this, &QtSerial::on_SerialPort_readyRead);
+
+
+//    connect(&mSerialDtu, &QSerialPort::readyRead, this, &QtSerial::dtuSendData);
 }
 
 
@@ -133,6 +150,146 @@ bool QtSerial::getSerialPortConfig()
     return mSerialPort.open(QSerialPort::ReadWrite);
 }
 
+//
+void QtSerial::initDtuPort()
+{
+    qDebug() << "initDtuPort";
+
+    //获取串口配置
+    mPortNameDtu = ui->cBoxDtu->currentText();
+    mBaudRateDtu = ui->cBoxDBDtu->currentText();
+    mParityDtu = ui->cBoxParityDtu->currentText();
+    mDateBitsDtu = ui->cBoxBRdtu->currentText();
+    mStopBitsDtu = ui->cBoxSBDtu->currentText();
+
+    //设置串口
+
+    mSerialDtu.setPortName(mPortNameDtu);    //端口号
+    if("9600" == mBaudRateDtu)
+    {
+        mSerialDtu.setBaudRate(QSerialPort::Baud9600);
+    }
+    else
+    {
+        mSerialDtu.setBaudRate(QSerialPort::Baud115200);
+    }
+
+    //校验位
+    if("Even" == mParityDtu)
+    {
+        mSerialDtu.setParity(QSerialPort::EvenParity);
+    }
+    else if("odd" == mParityDtu)
+    {
+        mSerialDtu.setParity(QSerialPort::OddParity);
+    }
+    else
+    {
+        mSerialDtu.setParity(QSerialPort::NoParity);
+    }
+
+    //数据位
+    if("5" == mDateBitsDtu)
+    {
+        mSerialDtu.setDataBits(QSerialPort::Data5);
+    }
+    else if("6" == mDateBitsDtu)
+    {
+        mSerialDtu.setDataBits(QSerialPort::Data6);
+    }
+    else if("7" == mDateBitsDtu)
+    {
+        mSerialDtu.setDataBits(QSerialPort::Data7);
+    }
+    else
+    {
+        mSerialDtu.setDataBits(QSerialPort::Data8);
+    }
+
+    //停止位
+    if("1.5" == mStopBitsDtu)
+    {
+        mSerialDtu.setStopBits(QSerialPort::OneAndHalfStop);
+    }
+    else if("2" == mStopBitsDtu)
+    {
+        mSerialDtu.setStopBits(QSerialPort::TwoStop);
+    }
+    else
+    {
+        mSerialDtu.setStopBits(QSerialPort::OneStop);
+    }
+
+}
+
+
+void QtSerial::on_BtOpenDtu_clicked()
+{
+    qDebug() << "on_BtOpenDtu_clicked" ;
+
+    //判断当前串口是否已经打开了，打开的话执行关闭动作
+    if(true == mIsOpenDtu)
+    {
+        mSerialDtu.close();
+        ui->BtOpenDtu->setText("打开");
+        mIsOpenDtu = false;
+
+        //其它选项进行禁止选项操作
+
+
+        //其它选项进行打开选项操作
+        ui->cBoxDtu->setEnabled(true);
+        ui->cBoxParityDtu->setEnabled(true);
+        ui->cBoxBRdtu->setEnabled(true);
+        ui->cBoxDBDtu->setEnabled(true);
+        ui->cBoxSBDtu->setEnabled(true);
+    }
+    else
+    {
+        //当前没有串口是打开的，进行打开操作
+        if(true == mSerialDtu.open(QSerialPort::ReadWrite))
+        {
+            mIsOpenDtu = true;
+            ui->BtOpenDtu->setText("关闭");
+            qDebug() << "DTU串口打开成功" ;
+
+            //其它选项进行打开选项操作
+
+
+            //其它选项进行禁止选项操作
+            ui->cBoxDtu->setEnabled(false);
+            ui->cBoxParityDtu->setEnabled(false);
+            ui->cBoxBRdtu->setEnabled(false);
+            ui->cBoxDBDtu->setEnabled(false);
+            ui->cBoxSBDtu->setEnabled(false);
+
+//            while (!mSerialDtu.atEnd())
+//            {
+
+//            }
+            int flg = mSerialDtu.write(senData.toUtf8());
+            qDebug() << "flg = " << flg;
+//            mSerialDtu.writeData(senData.toStdString().data(), senData.length());
+            qDebug() << "senData.toUtf8()" << senData.toUtf8();
+//            Delay_MSec(1000);
+
+        }
+        else
+        {
+            qDebug() << "DTU串口打开失败" ;
+        }
+    }
+     //ui->BtOpenDtu->setEnabled(mIsOpenDtu);
+}
+
+//void QtSerial::dtuSendData(QString sData)
+//{
+//    if(mIsOpenDtu == true)
+//    {
+//       mSerialDtu.write(sData);
+//        qDebug() << "mSerialDtu.write(senData)" << sData;
+//    }
+//}
 
 void QtSerial::on_BtOpen_clicked()
 {
@@ -193,7 +350,7 @@ void QtSerial::on_BtOpen_clicked()
 
 
 //数据接收和处理
-void QtSerial::on_BtWeight_clicked()
+QString QtSerial::on_BtWeight_clicked()
 {
     //memset(mDataBuf, 0, sizeof (mDataBuf));
     if(true == mIsOpen)
@@ -237,7 +394,9 @@ void QtSerial::on_BtWeight_clicked()
                         str = str.insert(1, '.');//在第一位数字后面插入小数点
                         ui->textData->appendPlainText(str + " Kg");
                         ui->textData->appendPlainText(sysTime);
-                        qDebug() << recvData;
+                        senData = str + "_____" + sysTime;
+//                        qDebug() << "enData = str + sysTime;" << senData;
+//                        qDebug() << recvData;
                     }
 
                 }
@@ -246,7 +405,9 @@ void QtSerial::on_BtWeight_clicked()
                     str = str.insert(2, '.');//在第二位数字后面插入小数点
                     ui->textData->appendPlainText(str + " Kg");
                     ui->textData->appendPlainText(sysTime);
-                    qDebug() << recvData;
+                    senData = str + "_____" +  sysTime;
+//                    qDebug() << "enData = str + sysTime = " << senData;
+//                    qDebug() << recvData;
                 }
 
 
@@ -255,6 +416,7 @@ void QtSerial::on_BtWeight_clicked()
         }
 
     }
+    return senData;
 }
 
 //串口读取数据函数（未用到）

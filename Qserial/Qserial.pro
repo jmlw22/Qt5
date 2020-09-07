@@ -1,4 +1,5 @@
 QT       += core gui    serialport
+QT       += network
 
 #LIBS += -lwiringPi
 
@@ -20,10 +21,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     main.cpp \
-    qtserial.cpp
+    qtserial.cpp \
+    rfid.cpp \
+    dtu.cpp
 
 HEADERS += \
-    qtserial.h
+    main.h
 
 FORMS += \
     qtserial.ui
@@ -32,3 +35,5 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+RESOURCES +=
